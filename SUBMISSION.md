@@ -118,8 +118,9 @@ N.B: i was having issue to use certain model, as I am a new API class user for G
 
 The current code of the Repo cover the PoC completely for now. The furnishing, or making it production grade is not something that can be done in 8 hours. But for production, where I can work on feedback and with stakeholders, I will do
 
-- Add a audit log (who approved, payload hash) so a wrong POST is reconstructable without reading `data/queue` by hand.
+- Add a audit log (who approved, payload hash, when etc).
 - Add a email inbox, users, SSO, Postgres, queues — 12 files and an in-memory API
 - Add a Agent frameworks (LangGraph, Mastra) — one vision call plus code is the product
 - Add a Auto-post of “high confidence” items as the default — contradicts the double-pay risk
+- Add unit test, CI Test so nothing breaks on update, and if breaks so we dont ship broken code.
 
