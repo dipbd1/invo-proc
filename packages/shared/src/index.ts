@@ -13,6 +13,7 @@ export {
 } from "./types.ts";
 export type {
   Check,
+  ExtractedLine,
   Extraction,
   InvoiceLine,
   Partner,
