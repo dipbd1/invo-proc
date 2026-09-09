@@ -33,6 +33,15 @@ export function itemPath(id: string): string {
   return path.join(settings.queueDir, `${id}.json`);
 }
 
+export async function queueFileExists(id: string): Promise<boolean> {
+  try {
+    await access(itemPath(id));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function saveItem(item: QueueItem): Promise<void> {
   await ensureQueueDir();
   await writeFile(itemPath(item.id), JSON.stringify(item, null, 2), "utf8");

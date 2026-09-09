@@ -1,40 +1,42 @@
 # Submission
 
-- Name:
+- Name: Dip Chowdhury
 - Submission date (YYYY-MM-DD): 2026-09-09
-- Hours actually spent: ~6 (code); Gemini run of all 12 invoices still pending a key
-- Repository / how to run it: https://github.com/dipbd1/invo-proc — `cp .env.example .env` (add `GEMINI_API_KEY` when extracting), then `./start.sh`. Review UI: http://localhost:3000
+- Hours actually spent: ~8 (code, testing, giving a run with gemini api)
+- Repository / how to run it: [https://github.com/dipbd1/invo-proc](https://github.com/dipbd1/invo-proc) — `cp .env.example .env` (add `GEMINI_API_KEY` when extracting), then `./start.sh`. Review UI: [http://localhost:3000](http://localhost:3000)
 
 ## 1. Understanding the request
 
-The client described staff typing invoices one by one and month-end overtime. The sentence that changes the design is the near **double payment from a typo**.
+The client described staff typing invoices one by one and month-end overtime. The sentence that changes the design is the "double payment from a typo", and mis calculation of entry, or even tax.
 
-I treated “read them with AI and enter them automatically” as: extract every sample, **prove the numbers**, and only then register into the accounting system they already use. Unsupervised POST would make the same typo faster.
-
-What I actually built is a **read → verify → human confirm → register** pipeline against the frozen mock at `localhost:8080`.
+To solve the issue, I tried to make a pipeline, where we process the invoices into something solid machine readable. What I actually built is a "read → verify → human confirm → register" pipeline against the frozen mock at `localhost:8080`.
 
 ## 2. What you would have asked the client
 
-| What you wanted to ask | The assumption you made | Why |
-|---|---|---|
-| May anything post without a person looking? | No. Approve in the UI or `npm run post -- <id>` is required. | Last month’s incident was a typo, not throughput. |
-| What if the supplier is not in the partner master? | Hold. Do not create partners and do not guess a nearby code. | The API only accepts listed `partner_code`s. |
-| 税込 vs 税抜 — which amounts are on the page? | Line `amount` is the figure the API will re-sum. Tax is recomputed with the API’s floor-per-code rule. If the printed tax disagrees, hold. | Matching the mock is the only way POST survives 422. |
-| Are handwritten notes extra lines or comments? | Flag `has_handwriting` and hold. Do not invent extra lines unless the note clearly changes an amount. | Safer than silently booking graffiti. |
-| Which date if both 発行日 and a stamp exist? | `issue_date` = 発行日, `due_date` = お支払期日, both `YYYY-MM-DD`. | That is what the API accepts. |
-| Duplicate means same number globally or per supplier? | Per supplier, as `DUPLICATE_INVOICE` is defined. | Matches the mock. |
-| Who is the bill-to vs the issuer? | Issuer is the supplier we match; 御中 is Sample Trading. | Partner master is suppliers, not customers. |
+
+| What you wanted to ask                                        | The assumption you made                                                                                                                    | Why                                                                                                                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| May anything post without a person looking?                   | No. Approve in the UI or `npm run post -- <id>` is required.                                                                               | Last month’s incident was a typo, reviewing is mandatory for financial topic                                                                  |
+| What if the supplier is not in the partner master?            | Hold. Do not create partners and do not guess a nearby code.                                                                               | The API only accepts listed `partner_code`s.                                                                                                  |
+| 税込 vs 税抜, some have these, and which amounts are on the page? | Line `amount` is the figure the API will re-sum. Tax is recomputed with the API’s floor-per-code rule. If the printed tax disagrees, hold. | Matching the mock is the only way POST survives 422 (Unprocessable Content).                                                                  |
+| Are handwritten notes extra lines or comments?                | Flag `has_handwriting` and hold. Do not invent extra lines unless the note clearly changes an amount.                                      | Safer than silently booking graffiti.                                                                                                         |
+| Which date if both 発行日 and a stamp exist?                     | `issue_date` = 発行日, `due_date` = お支払期日, both `YYYY-MM-DD`.                                                                                 | That is what the API accepts. Reading the API caused me to understand what shall be the end result I shall provide to align with the process. |
+| Duplicate means same number globally or per supplier?         | Per supplier, as `DUPLICATE_INVOICE` is defined.                                                                                           | Matches the mock.                                                                                                                             |
+| Who is the bill-to vs the issuer?                             | Issuer is the supplier we match; 御中 is Sample Trading.                                                                                     | Partner master is suppliers, not customers.                                                                                                   |
+
+
+
 
 ## 3. Scoping decisions
 
 **What you built**
 
-- Gemini 2.5 Flash structured extraction (PDF + JPEG) behind `GEMINI_API_KEY`
-- Deterministic partner match, tax mapping, amount/date/duplicate checks in `@invo/shared`
+- Gemini 2.5 Flash structured extraction (PDF + JPEG) behind `GEMINI_API_KEY` (N.B: had to use gemini-3.6-flash as 2.5-flash was not available in the free tier, or discontinued)
+- Deterministic partner match, tax mapping, amount/date/duplicate checks in `@invo/shared` . this is the shared code that is used to verify the extracted data against the mock.
 - Review queue + Hono API
 - Review UI (original + editable fields + checks)
 - Frozen accounting mock, copied verbatim
-- One-command `./start.sh`
+- One-command to start all 3 apps, `./start.sh`
 - A seeded `invoice_01` fixture so the post path can be demonstrated before a key exists
 
 **What you left out, and why**
@@ -44,6 +46,8 @@ What I actually built is a **read → verify → human confirm → register** pi
 - Agent frameworks (LangGraph, Mastra) — one vision call plus code is the product
 - Separate OCR (Tesseract, Document AI) — Gemini already sees the page
 - Auto-post of “high confidence” items as the default — contradicts the double-pay risk
+
+
 
 ## 4. Design and technology choices
 
@@ -89,10 +93,12 @@ When the 12-file run is done, this subsection should name a real extraction miss
 
 Constraints handled in shared code before POST: `YYYY-MM-DD`, integer JPY, tax codes not rates, partner must exist, tax = floor per code, duplicate = 409.
 
-| Invoice | Result | How you handled it |
-|---|---|---|
-| invoice_01 (fixture, assignment example YM-2026-0107) | Posted `ACC-0001` on explicit approve | Partner `T1010001000101` → `P-1001`. Second post blocked as duplicate. |
-| invoice_02–invoice_12 | Not extracted in this submission yet | Waiting on `GEMINI_API_KEY`. CLI: `cd apps/ingest && npm run ingest -- ../../static/take-home/invoices` |
+
+| Invoice                                               | Result                                | How you handled it                                                                                      |
+| ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| invoice_01 (fixture, assignment example YM-2026-0107) | Posted `ACC-0001` on explicit approve | Partner `T1010001000101` → `P-1001`. Second post blocked as duplicate.                                  |
+| invoice_02–invoice_12                                 | Not extracted in this submission yet  | Waiting on `GEMINI_API_KEY`. CLI: `cd apps/ingest && npm run ingest -- ../../static/take-home/invoices` |
+
 
 If POST still 422s, the queue item becomes `api_error` and keeps the API error body. Numbers are not silently adjusted.
 
@@ -104,8 +110,11 @@ If POST still 422s, the queue item becomes `api_error` and keeps the API error b
 - **Where this breaks first**: Gemini rate limits / free-tier daily caps; then suppliers missing from the master; then 税込 vs 税抜 disagreements that look like `AMOUNT_MISMATCH`.
 - **How you would find out if something was registered incorrectly**: the queue JSON is the audit (source file, checks, payload, `accounting_id`, reviewer click). Re-GET `/invoices` and diff against the source file. Production would add who approved and when — not built here.
 
+
+
 ## 8. What you would do with another 8 hours
 
 1. Run all 12 invoices with the key, fill the table in section 6, and keep one real Gemini miss as the section 5 example — that is what the brief asks us to show.
 2. Tighten mixed-rate / 税込 handling so food suppliers (8%) do not stall month-end.
 3. A tiny audit log (who approved, payload hash) so a wrong POST is reconstructable without reading `data/queue` by hand.
+

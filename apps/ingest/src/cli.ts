@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { settings } from "./config.ts";
 import { processFile } from "./process.ts";
+import { idFromFilename, queueFileExists } from "./queue.ts";
 
 async function filesIn(target: string): Promise<string[]> {
   const info = await stat(target);
@@ -21,7 +22,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const target = path.resolve(process.argv[2] ?? settings.invoicesDir);
+  const args = process.argv.slice(2);
+  const skipExisting = args.includes("--skip-existing");
+  const positional = args.filter((a) => !a.startsWith("-"));
+  const target = path.resolve(positional[0] ?? settings.invoicesDir);
   const files = await filesIn(target);
   if (files.length === 0) {
     console.error(`No invoice files in ${target}`);
@@ -31,6 +35,10 @@ async function main(): Promise<void> {
   console.log(`Extracting ${files.length} file(s) with ${settings.geminiModel}`);
   for (const file of files) {
     try {
+      if (skipExisting && (await queueFileExists(idFromFilename(file)))) {
+        console.log(`${path.basename(file)}\tskipped\texists`);
+        continue;
+      }
       const item = await processFile(file);
       const failed = item.checks.filter((c) => !c.ok).map((c) => c.id);
       console.log(
