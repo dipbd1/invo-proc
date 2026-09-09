@@ -116,7 +116,10 @@ N.B: i was having issue to use certain model, as I am a new API class user for G
 
 ## 8. What you would do with another 8 hours
 
-1. Run all 12 invoices with the key, fill the table in section 6, and keep one real Gemini miss as the section 5 example — that is what the brief asks us to show.
-2. Tighten mixed-rate / 税込 handling so food suppliers (8%) do not stall month-end.
-3. A tiny audit log (who approved, payload hash) so a wrong POST is reconstructable without reading `data/queue` by hand.
+The current code of the Repo cover the PoC completely for now. The furnishing, or making it production grade is not something that can be done in 8 hours. But for production, where I can work on feedback and with stakeholders, I will do
+
+- Add a audit log (who approved, payload hash) so a wrong POST is reconstructable without reading `data/queue` by hand.
+- Add a email inbox, users, SSO, Postgres, queues — 12 files and an in-memory API
+- Add a Agent frameworks (LangGraph, Mastra) — one vision call plus code is the product
+- Add a Auto-post of “high confidence” items as the default — contradicts the double-pay risk
 
