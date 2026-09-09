@@ -1,0 +1,12 @@
+---
+description: Frozen mock accounting API — do not change spec
+globs: "apps/accounting-api/**"
+alwaysApply: false
+---
+
+# Accounting API
+
+- `accounting_api.py` is the assignment mock. Do not change endpoints, error codes, or tax math.
+- Tax is `math.floor(subtotal * rate)` **per tax code**, then summed.
+- Auth header is `X-API-Key: demo-key-1234`.
+- If the product needs different behaviour, handle it in ingest/shared, not here.

@@ -1,0 +1,13 @@
+---
+description: Thin human review screen for extracted invoices
+globs: "apps/review/**"
+alwaysApply: false
+---
+
+# Review UI
+
+- Two panes: original file and editable extracted fields plus check results.
+- Approve is the only path from this app to POST `/invoices`.
+- Show verifier failures in red. Do not hide API error bodies.
+- Talk to ingest (`:3001`), never to Gemini and never to the accounting API directly.
+- Keep it a local tool. No auth, no design system, no extra routes.

@@ -1,0 +1,16 @@
+---
+description: Repo-wide constraints for the invoice intake take-home
+alwaysApply: true
+---
+
+# Project
+
+- npm per folder. No pnpm, no npm workspaces, no hoisted root `node_modules`.
+- Consume shared code with `"@invo/shared": "file:../../packages/shared"`.
+- Sample invoices and the brief live in `static/take-home/`. Do not copy or “clean” them.
+- Do not change `apps/accounting-api` behaviour. Copy is verbatim from TAKE_HOME.
+- Extract with Gemini; verify amounts, dates, tax, partners, and duplicates in TypeScript.
+- Never POST an invoice unless the operator explicitly approves (UI or CLI). `--auto-post` is demo-only.
+- If printed totals disagree with recalculated totals, hold for review. Do not fudge numbers to pass 422.
+- Never commit `.env`, keys, or `node_modules`.
+- Keep slices small: one concern per commit, then push. No dump PRs.

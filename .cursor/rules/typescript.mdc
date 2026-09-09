@@ -1,0 +1,14 @@
+---
+description: TypeScript and Zod at API and model boundaries
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+- Strict TypeScript. Do not use `any` to paper over Gemini output.
+- Parse model JSON and HTTP bodies with Zod. Trust the schema, not the prompt.
+- Integers only for JPY amounts. `quantity` and `unit_price` may be null.
+- Dates must be `YYYY-MM-DD` before they leave shared code.
+- Partner matching and tax floor math live in `@invo/shared`, not in React components.
+- Prefer small pure functions that can be unit-tested without Gemini.

@@ -1,0 +1,12 @@
+---
+description: Slice-sized commits and pushes for this take-home
+alwaysApply: true
+---
+
+# Git
+
+- Commit after a slice works, not after “the whole app”.
+- Message is why (`feat: hold posts behind an explicit review action`), not a file list.
+- Push `origin HEAD` after each slice. Never `--force`. Never `--no-verify`.
+- Do not commit `.env`, secrets, `.DS_Store`, `node_modules`, or `data/queue/*` runtime files.
+- Leave incomplete work uncommitted rather than marking it as done.
