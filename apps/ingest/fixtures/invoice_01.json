@@ -1,0 +1,80 @@
+{
+  "id": "invoice_01",
+  "sourcePath": "static/take-home/invoices/invoice_01.pdf",
+  "sourceName": "invoice_01.pdf",
+  "status": "ready",
+  "extraction": {
+    "supplier_name_raw": "株式会社山田製作所",
+    "registration_no_raw": "T1010001000101",
+    "invoice_number": "YM-2026-0107",
+    "issue_date": "2026-01-07",
+    "due_date": "2026-02-28",
+    "currency": "JPY",
+    "lines": [
+      {
+        "description": "Precision part A-100",
+        "quantity": 120,
+        "unit": "pcs",
+        "unit_price": 1250,
+        "amount": 150000,
+        "tax_rate_percent": 10
+      },
+      {
+        "description": "Packing and freight",
+        "quantity": null,
+        "unit": "lot",
+        "unit_price": null,
+        "amount": 18000,
+        "tax_rate_percent": 10
+      }
+    ],
+    "printed_subtotal": 168000,
+    "printed_tax_amount": 16800,
+    "printed_total": 184800,
+    "has_handwriting": false,
+    "uncertain_fields": []
+  },
+  "payload": {
+    "partner_code": "P-1001",
+    "invoice_number": "YM-2026-0107",
+    "issue_date": "2026-01-07",
+    "due_date": "2026-02-28",
+    "currency": "JPY",
+    "lines": [
+      {
+        "description": "Precision part A-100",
+        "quantity": 120,
+        "unit": "pcs",
+        "unit_price": 1250,
+        "amount": 150000,
+        "tax_code": "T10"
+      },
+      {
+        "description": "Packing and freight",
+        "quantity": null,
+        "unit": "lot",
+        "unit_price": null,
+        "amount": 18000,
+        "tax_code": "T10"
+      }
+    ],
+    "subtotal": 168000,
+    "tax_amount": 16800,
+    "total_amount": 184800
+  },
+  "checks": [
+    {
+      "id": "partner",
+      "ok": true,
+      "message": "Matched P-1001 via registration_no"
+    },
+    {
+      "id": "fixture",
+      "ok": true,
+      "message": "Sample queue item so the review UI works before GEMINI_API_KEY is set. Replace by running ingest."
+    }
+  ],
+  "accountingId": null,
+  "apiError": null,
+  "updatedAt": "2026-09-09T00:00:00.000Z"
+}

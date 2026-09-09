@@ -10,3 +10,13 @@ npm run ingest -- ../../static/take-home/invoices
 ```
 
 Without a key the CLI exits with an explanation. The accounting API should be running so partner matching can work; if it is down, items are still written and marked `needs_review`.
+
+Review API (does not POST unless you call post):
+
+```bash
+python3 ../../apps/accounting-api/accounting_api.py   # other terminal
+npm start   # http://localhost:3001
+npm run post -- invoice_01
+```
+
+`GET /items` seeds a fixture `invoice_01` so the UI can be checked before a Gemini key exists.

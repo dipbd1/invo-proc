@@ -1,11 +1,32 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { queueItemSchema, type QueueItem } from "@invo/shared";
 import { settings } from "./config.ts";
 
+const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../fixtures");
+
 export async function ensureQueueDir(): Promise<string> {
   await mkdir(settings.queueDir, { recursive: true });
+  await seedFixtures();
   return settings.queueDir;
+}
+
+async function seedFixtures(): Promise<void> {
+  let names: string[] = [];
+  try {
+    names = (await readdir(fixturesDir)).filter((n) => n.endsWith(".json"));
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    const dest = path.join(settings.queueDir, name);
+    try {
+      await access(dest);
+    } catch {
+      await copyFile(path.join(fixturesDir, name), dest);
+    }
+  }
 }
 
 export function itemPath(id: string): string {
@@ -18,6 +39,7 @@ export async function saveItem(item: QueueItem): Promise<void> {
 }
 
 export async function loadItem(id: string): Promise<QueueItem> {
+  await ensureQueueDir();
   const raw = await readFile(itemPath(id), "utf8");
   return queueItemSchema.parse(JSON.parse(raw));
 }
