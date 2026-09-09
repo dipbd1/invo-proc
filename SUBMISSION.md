@@ -106,9 +106,9 @@ N.B: i was having issue to use certain model, as I am a new API class user for G
 
 ## 7. Cost, limits, and risk in production
 
-- **Cost per invoice** (and what makes it up): one Flash call, ~1 page image + short JSON. Paid Gemini 2.5 Flash is about **$0.30 / 1M input** and **$2.50 / 1M output**. A one-page invoice is well **under $0.01**. Free tier covers this sample pack. Repair pass doubles that in the worst case.
-- **Monthly cost at 1,000 invoices per month**: on the order of **a few dollars** of Gemini, plus whatever you pay people to review exceptions. Review time dominates money.
-- **Processing time per invoice**: typically **5–15s** for the model; verifier is milliseconds.
+- **Cost per invoice** (and what makes it up): one `gemini-3.5-flash-lite` call — short prompt + ~1 page PDF/JPEG + short JSON. Paid Standard is **$0.30 / 1M input** (text/image/PDF) and **$2.50 / 1M output** (incl. thinking). A one-page invoice is typically a few thousand input tokens and a few hundred output tokens, so **well under $0.01** (about **$0.001–$0.01**). Free tier covers this sample pack. A repair pass is a second call and roughly doubles that. Cheaper on paper: `gemini-3.1-flash-lite` at **$0.25 / $1.50**, or 2.5 Flash-Lite at **$0.10 / $0.40** (this key cannot use 2.5). Dearer: 3.6 Flash at **$0.75 / $3.75**. Lite is the right default because the verifier, not the model, owns the numbers.
+- **Monthly cost at 1,000 invoices per month**: about **$1–$10** of Gemini on Standard (a few dollars if most invoices are one page and skip repair). Review time still dominates money.
+- **Processing time per invoice**: typically **1–5s** for Flash-Lite on a one-page invoice; verifier is milliseconds. Repair pass adds another call.
 - **Where this breaks first**: Gemini rate limits / free-tier daily caps; then suppliers missing from the master; then 税込 vs 税抜 disagreements that look like `AMOUNT_MISMATCH`.
 - **How you would find out if something was registered incorrectly**: the queue JSON is the audit (source file, checks, payload, `accounting_id`, reviewer click). Re-GET `/invoices` and diff against the source file. Production would add who approved and when — not built here.
 
