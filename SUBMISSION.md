@@ -33,11 +33,11 @@ To solve the issue, I tried to make a pipeline, where we process the invoices in
 
 - Gemini 2.5 Flash structured extraction (PDF + JPEG) behind `GEMINI_API_KEY` (N.B: had to use gemini-3.6-flash as 2.5-flash was not available in the free tier, or discontinued)
 - Deterministic partner match, tax mapping, amount/date/duplicate checks in `@invo/shared` . this is the shared code that is used to verify the extracted data against the mock.
-- Review queue + Hono API
+- Review queue + Hono API (Backend API so I can propagate request to the accounting system)
 - Review UI (original + editable fields + checks)
-- Frozen accounting mock, copied verbatim
+- Frozen accounting mock
 - One-command to start all 3 apps, `./start.sh`
-- A seeded `invoice_01` fixture so the post path can be demonstrated before a key exists
+- A seeded `invoice_01` fixture so the post path can be demonstrated before a key exists (test purposes)
 
 **What you left out, and why**
 
@@ -87,7 +87,7 @@ Default model: `gemini-2.5-flash`. Override with `GEMINI_MODEL`.
 
 Not yet from a live Gemini run. The fixture path did catch the **duplicate** case: posting `YM-2026-0107` for `P-1001` a second time is refused (`Refusing to POST: duplicate`) and Approve stays disabled once status is `posted`. That is the check that would have caught last month’s near double-pay.
 
-When the 12-file run is done, this subsection should name a real extraction miss (typical: tax-included total vs line net, or 御中 vs issuer).
+When the 12-file run is done, this subsection should name a real extraction miss.
 
 ## 6. Integrating with the accounting system
 
@@ -101,6 +101,8 @@ Constraints handled in shared code before POST: `YYYY-MM-DD`, integer JPY, tax c
 
 
 If POST still 422s, the queue item becomes `api_error` and keeps the API error body. Numbers are not silently adjusted.
+
+N.B: i was having issue to use certain model, as I am a new API class user for Gemini, and they are not giving me the model  which will be best for cost. So the integration happened in 2 phase, where I used my local LLM to do things, and later I took the API, converted ingestion code.
 
 ## 7. Cost, limits, and risk in production
 
