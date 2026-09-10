@@ -17,7 +17,7 @@ function required(name: string, fallback?: string): string {
 
 export const settings = {
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite",
   accountingApiUrl: process.env.ACCOUNTING_API_URL ?? "http://localhost:8080",
   accountingApiKey: process.env.ACCOUNTING_API_KEY ?? "demo-key-1234",
   ingestPort: Number(process.env.INGEST_PORT ?? 3001),

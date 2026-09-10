@@ -1,14 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  AccountingClient,
-  invoiceKey,
-  verifyExtraction,
-  type QueueItem,
-} from "@invo/shared";
-import { settings } from "./config.ts";
+import { verifyExtraction, type QueueItem } from "@invo/shared";
 import { extractWithGemini } from "./gemini.ts";
 import { idFromFilename, saveItem } from "./queue.ts";
+import { refreshSiblings, verificationContext } from "./refresh.ts";
 
 const REPAIRABLE = new Set([
   "issue_date",
@@ -16,9 +11,6 @@ const REPAIRABLE = new Set([
   "date_order",
   "currency",
   "tax_codes",
-  "printed_subtotal",
-  "printed_tax",
-  "printed_total",
 ]);
 
 function shouldRepair(item: QueueItem): boolean {
@@ -28,20 +20,8 @@ function shouldRepair(item: QueueItem): boolean {
 export async function processFile(filePath: string): Promise<QueueItem> {
   const abs = path.resolve(filePath);
   const bytes = await readFile(abs);
-  const client = new AccountingClient(settings.accountingApiUrl, settings.accountingApiKey);
-
-  let partners: Awaited<ReturnType<AccountingClient["partners"]>> = [];
-  let registeredKeys = new Set<string>();
-  try {
-    partners = await client.partners();
-    const invoices = await client.listInvoices();
-    registeredKeys = new Set(invoices.map((i) => invoiceKey(i.partner_code, i.invoice_number)));
-  } catch (error) {
-    console.warn(
-      `Accounting API not reachable at ${settings.accountingApiUrl}. Partner matching will fail until it is up.`,
-      error instanceof Error ? error.message : error,
-    );
-  }
+  const id = idFromFilename(abs);
+  const { partners, registeredKeys } = await verificationContext(id);
 
   let extraction = await extractWithGemini(bytes, abs);
   let verified = verifyExtraction({ extraction, partners, registeredKeys });
@@ -56,6 +36,7 @@ export async function processFile(filePath: string): Promise<QueueItem> {
 
   const item = asItem(abs, extraction, verified);
   await saveItem(item);
+  await refreshSiblings(item);
   return item;
 }
 

@@ -33,6 +33,57 @@ export function invoiceKey(partnerCode: string, invoiceNumber: string): string {
   return `${partnerCode}::${invoiceNumber}`;
 }
 
+const HARD_FAIL_IDS = new Set([
+  "partner",
+  "issue_date",
+  "due_date",
+  "date_order",
+  "currency",
+  "tax_codes",
+  "duplicate",
+  "printed_subtotal",
+  "printed_tax",
+  "printed_total",
+]);
+
+export function isHardFailCheck(id: string): boolean {
+  return HARD_FAIL_IDS.has(id) || /^line_\d+_tax$/.test(id);
+}
+
+export function hardFailures(checks: Check[]): string[] {
+  return checks.filter((c) => !c.ok && isHardFailCheck(c.id)).map((c) => c.id);
+}
+
+export function canApprove(item: {
+  status: QueueStatus;
+  payload: RegisterInvoice | null;
+  checks: Check[];
+}): boolean {
+  if (item.status === "posted") return false;
+  if (!item.payload) return false;
+  return hardFailures(item.checks).length === 0;
+}
+
+/** Other queue files with the same partner+number. Earlier id (or already posted) wins. */
+export function siblingInvoiceKeys(
+  items: Array<{
+    id: string;
+    status: string;
+    payload: { partner_code: string; invoice_number: string } | null;
+  }>,
+  currentId: string,
+): Set<string> {
+  const keys = new Set<string>();
+  for (const item of items) {
+    if (item.id === currentId || !item.payload) continue;
+    const earlier = item.id.localeCompare(currentId) < 0;
+    if (earlier || item.status === "posted") {
+      keys.add(invoiceKey(item.payload.partner_code, item.payload.invoice_number));
+    }
+  }
+  return keys;
+}
+
 export function verifyExtraction(input: VerifyInput): VerifyResult {
   const checks: Check[] = [];
   const { extraction, partners, registeredKeys } = input;
@@ -205,7 +256,7 @@ export function verifyExtraction(input: VerifyInput): VerifyResult {
       id: "duplicate",
       ok: !dup,
       message: dup
-        ? `Already registered for ${partnerCode} / ${extraction.invoice_number}`
+        ? `Same invoice number already exists for ${partnerCode} / ${extraction.invoice_number}`
         : "Invoice number is not already registered for this partner",
     });
 

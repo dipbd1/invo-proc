@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Extraction, Partner } from "./types.ts";
-import { invoiceKey, verifyExtraction } from "./verify.ts";
+import {
+  canApprove,
+  hardFailures,
+  invoiceKey,
+  siblingInvoiceKeys,
+  verifyExtraction,
+} from "./verify.ts";
 
 const partners: Partner[] = [
   {
@@ -69,6 +75,19 @@ test("printed total mismatch is held, totals are not rewritten to please the API
   const printed = result.checks.find((c) => c.id === "printed_total");
   assert.equal(printed?.ok, false);
   assert.equal(result.payload?.total_amount, 184800);
+  assert.ok(hardFailures(result.checks).includes("printed_total"));
+  assert.equal(canApprove({ status: result.status, payload: result.payload, checks: result.checks }), false);
+});
+
+test("handwriting holds for a look but does not block Approve", () => {
+  const result = verifyExtraction({
+    extraction: { ...clean, has_handwriting: true },
+    partners,
+    registeredKeys: new Set(),
+  });
+  assert.equal(result.status, "needs_review");
+  assert.equal(hardFailures(result.checks).length, 0);
+  assert.equal(canApprove({ status: result.status, payload: result.payload, checks: result.checks }), true);
 });
 
 test("duplicate partner + invoice number is blocked before POST", () => {
@@ -79,4 +98,35 @@ test("duplicate partner + invoice number is blocked before POST", () => {
   });
   assert.equal(result.status, "needs_review");
   assert.equal(result.checks.find((c) => c.id === "duplicate")?.ok, false);
+  assert.ok(hardFailures(result.checks).includes("duplicate"));
+});
+
+test("later file with the same partner+number is a sibling duplicate; earlier file stays clear", () => {
+  const payload = {
+    partner_code: "P-1001",
+    invoice_number: "YM-2026-0107",
+  };
+  const items = [
+    { id: "invoice_01", status: "ready", payload },
+    { id: "invoice_07", status: "ready", payload },
+  ];
+  const for01 = siblingInvoiceKeys(items, "invoice_01");
+  const for07 = siblingInvoiceKeys(items, "invoice_07");
+  assert.equal(for01.has(invoiceKey("P-1001", "YM-2026-0107")), false);
+  assert.equal(for07.has(invoiceKey("P-1001", "YM-2026-0107")), true);
+});
+
+test("posted later file still blocks the earlier one via sibling keys", () => {
+  const payload = {
+    partner_code: "P-1001",
+    invoice_number: "YM-2026-0107",
+  };
+  const keys = siblingInvoiceKeys(
+    [
+      { id: "invoice_01", status: "ready", payload },
+      { id: "invoice_07", status: "posted", payload },
+    ],
+    "invoice_01",
+  );
+  assert.equal(keys.has(invoiceKey("P-1001", "YM-2026-0107")), true);
 });

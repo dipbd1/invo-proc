@@ -1,23 +1,7 @@
-import { AccountingClient, type QueueItem } from "@invo/shared";
+import { AccountingClient, hardFailures, type QueueItem } from "@invo/shared";
 import { settings } from "./config.ts";
 import { saveItem } from "./queue.ts";
 import { refreshItem } from "./refresh.ts";
-
-const HARD_FAIL = new Set([
-  "partner",
-  "issue_date",
-  "due_date",
-  "date_order",
-  "currency",
-  "tax_codes",
-  "duplicate",
-]);
-
-function hardFailures(item: QueueItem): string[] {
-  return item.checks
-    .filter((c) => !c.ok && (HARD_FAIL.has(c.id) || c.id.endsWith("_tax")))
-    .map((c) => c.id);
-}
 
 export async function postItem(id: string, item: QueueItem): Promise<QueueItem> {
   if (!item.payload) {
@@ -25,7 +9,7 @@ export async function postItem(id: string, item: QueueItem): Promise<QueueItem> 
   }
 
   const refreshed = await refreshItem(item, item.extraction);
-  const blocked = hardFailures(refreshed);
+  const blocked = hardFailures(refreshed.checks);
   if (blocked.length > 0) {
     await saveItem(refreshed);
     throw new PostBlockedError(`Refusing to POST: ${blocked.join(", ")}`, refreshed);

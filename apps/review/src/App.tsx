@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Extraction, ExtractedLine, QueueItem } from "@invo/shared";
+import { canApprove, type Extraction, type ExtractedLine, type QueueItem } from "@invo/shared";
 import { fileUrl, getItem, listItems, postItem, saveItem } from "./api.ts";
 
 function emptyLine(): ExtractedLine {
@@ -280,13 +280,19 @@ export function App() {
               ))}
             </ul>
             {item.checks.some((c) => !c.ok && c.id.startsWith("printed_")) ? (
-              <p className="muted">Printed mismatches stay held. Approve still posts the recomputed payload if partner, dates, and tax codes are valid.</p>
+              <p className="muted">
+                Printed totals don't match the lines. Approve stays off — we will not send a rewritten total just to pass the API.
+              </p>
             ) : null}
             <div className="actions">
               <button type="button" disabled={busy} onClick={() => void onSave()}>
                 Save &amp; recheck
               </button>
-              <button type="button" disabled={busy || item.status === "posted"} onClick={() => void onPost()}>
+              <button
+                type="button"
+                disabled={busy || !canApprove(item)}
+                onClick={() => void onPost()}
+              >
                 Approve &amp; post
               </button>
             </div>
