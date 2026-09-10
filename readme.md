@@ -22,9 +22,10 @@ Extract the sample pack (needs a Gemini key):
 ```bash
 cd apps/ingest
 npm run ingest -- ../../static/take-home/invoices
+npm run ingest -- --skip-existing ../../static/take-home/invoices
 ```
 
-Without a key the UI still loads a seeded `invoice_01` fixture so you can walk the review and post path.
+`--skip-existing` skips invoices that already have a `data/queue/<name>.json`. Without a key the UI still loads a seeded `invoice_01` fixture so you can walk the review and post path.
 
 ## Folders (npm per app, no workspaces)
 
