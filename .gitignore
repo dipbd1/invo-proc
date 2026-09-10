@@ -15,6 +15,7 @@ __pycache__/
 
 # runtime
 data/queue/
+data/queue_test/
 !data/queue/.gitkeep
 
 # os / editor
